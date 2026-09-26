@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-WebhookEngine.Worker-92e637c8-3d5d-47d8-b2ed-2946df969f82</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WebhookEngine.Core\WebhookEngine.Core.csproj" />
+    <ProjectReference Include="..\WebhookEngine.Infrastructure\WebhookEngine.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

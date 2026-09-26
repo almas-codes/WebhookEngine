@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="WebhookEngine.Api/WebhookEngine.Api.csproj" />
+  <Project Path="WebhookEngine.Core/WebhookEngine.Core.csproj" />
+  <Project Path="WebhookEngine.Domain/WebhookEngine.Domain.csproj" />
+  <Project Path="WebhookEngine.Infrastructure/WebhookEngine.Infrastructure.csproj" />
+  <Project Path="WebhookEngine.IntegrationTests/WebhookEngine.IntegrationTests.csproj" />
+  <Project Path="WebhookEngine.Worker/WebhookEngine.Worker.csproj" />
+</Solution>
