@@ -7,7 +7,9 @@ using Microsoft.Extensions.Configuration;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-builder.Services.AddHttpClient("WebhookClient");
+builder.Services.AddHttpClient("WebhookClient")
+    .AddStandardResilienceHandler();
+
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddHostedService<DeliveryWorker>();
