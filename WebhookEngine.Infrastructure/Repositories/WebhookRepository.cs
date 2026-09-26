@@ -33,23 +33,28 @@ public sealed class WebhookRepository : IWebhookRepository
 
     public async Task<List<Endpoint>> GetEndpointsForEventAsync(Guid tenantId, string eventType, CancellationToken cancellationToken = default)
     {
-        // Simple matching logic. In real-world, we check SubscribedEventPatterns properly.
+        // grab all active endpoints for this tenant first
         var endpoints = await _dbContext.Endpoints
             .Where(e => e.TenantId == tenantId && e.Status == EndpointStatus.Active)
             .ToListAsync(cancellationToken);
 
-        // Filter in memory for patterns like "invoice.*"
+        // check which ones actually subscribed to this specific event (e.g. "invoice.created")
         return endpoints.Where(e => e.SubscribedEventPatterns.Any(p => MatchPattern(p, eventType))).ToList();
     }
 
     private static bool MatchPattern(string pattern, string eventType)
     {
+        // catch-all wildcard
         if (pattern == "*") return true;
+        
+        // prefix wildcard (e.g., "invoice.*")
         if (pattern.EndsWith(".*"))
         {
             var prefix = pattern.Substring(0, pattern.Length - 2);
             return eventType.StartsWith(prefix);
         }
+        
+        // exact match
         return pattern == eventType;
     }
 }

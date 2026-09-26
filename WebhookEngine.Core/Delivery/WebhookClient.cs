@@ -19,13 +19,13 @@ public class WebhookClient : IWebhookClient
 
     public async Task SendAsync(WebhookEventRecord webhookEvent, CancellationToken cancellationToken = default)
     {
-        // Save the event
+        // save the raw event payload first so we have a durable record
         await _repository.AddEventAsync(webhookEvent, cancellationToken);
 
-        // Find matching endpoints for this tenant and event type
+        // find all active endpoints that actually want to hear about this event
         var endpoints = await _repository.GetEndpointsForEventAsync(webhookEvent.TenantId, webhookEvent.Type, cancellationToken);
 
-        // Create deliveries for each endpoint
+        // queue up a delivery attempt for each matched endpoint
         foreach (var endpoint in endpoints)
         {
             var delivery = new WebhookEngine.Domain.Delivery

@@ -14,6 +14,7 @@ public static class SendWebhookFeature
     {
         app.MapPost("/api/webhooks/send", async (SendWebhookRequest request, IWebhookClient client, CancellationToken ct) =>
         {
+            // construct the event record that will be pushed to the DB
             var webhookEvent = new WebhookEventRecord
             {
                 TenantId = request.TenantId,
@@ -22,8 +23,10 @@ public static class SendWebhookFeature
                 IdempotencyKey = request.IdempotencyKey
             };
 
+            // delegates the routing and queueing to the core engine
             await client.SendAsync(webhookEvent, ct);
 
+            // always return 202 accepted since delivery is async
             return Results.Accepted();
         })
         .WithTags("Webhooks");

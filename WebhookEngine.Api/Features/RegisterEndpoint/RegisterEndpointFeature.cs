@@ -15,8 +15,10 @@ public static class RegisterEndpointFeature
     {
         app.MapPost("/api/endpoints", async (RegisterEndpointRequest request, IWebhookClient client, CancellationToken ct) =>
         {
+            // generate a fresh signing secret for this endpoint
             var rawSecret = Guid.NewGuid().ToString("N");
-            var hashedSecret = HmacSigner.GenerateSignature(rawSecret, "MasterSecretKey123!"); // Simplification for demo
+            // in real life, you'd pull this master key from a vault or config
+            var hashedSecret = HmacSigner.GenerateSignature(rawSecret, "MasterSecretKey123!"); 
 
             var endpoint = new WebhookEngine.Domain.Endpoint
             {
@@ -28,6 +30,7 @@ public static class RegisterEndpointFeature
 
             await client.RegisterEndpointAsync(endpoint, ct);
 
+            // only show the raw secret once, immediately upon creation
             return Results.Ok(new { endpoint.Id, Secret = rawSecret });
         })
         .WithTags("Endpoints");

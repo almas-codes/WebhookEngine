@@ -25,6 +25,7 @@ public class DeliveryWorker : BackgroundService
     {
         _logger.LogInformation("DeliveryWorker started.");
 
+        // keep polling until the app shuts down
         while (!stoppingToken.IsCancellationRequested)
         {
             try
@@ -33,9 +34,11 @@ public class DeliveryWorker : BackgroundService
             }
             catch (Exception ex)
             {
+                // don't crash the worker if one cycle fails
                 _logger.LogError(ex, "Error processing deliveries.");
             }
 
+            // aggressive polling for the demo, would be higher in prod
             await Task.Delay(2000, stoppingToken);
         }
     }
@@ -46,6 +49,7 @@ public class DeliveryWorker : BackgroundService
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var httpClientFactory = scope.ServiceProvider.GetRequiredService<IHttpClientFactory>();
 
+        // grab a batch of pending webhooks that are ready to go
         var pendingDeliveries = await dbContext.Deliveries
             .Where(d => d.Status == DeliveryStatus.Pending && d.NextAttemptAt <= DateTimeOffset.UtcNow)
             .OrderBy(d => d.NextAttemptAt)
@@ -76,7 +80,8 @@ public class DeliveryWorker : BackgroundService
             var request = new HttpRequestMessage(HttpMethod.Post, endpoint.Url);
             
             var payload = webhookEvent.PayloadJson;
-            var signature = HmacSigner.GenerateSignature(payload, "MasterSecretKey123!"); // Match the demo key
+            // compute signature so the receiver knows it actually came from us
+            var signature = HmacSigner.GenerateSignature(payload, "MasterSecretKey123!"); 
             
             request.Content = new StringContent(payload, Encoding.UTF8, "application/json");
             request.Headers.Add("X-Webhook-Signature", signature);
@@ -101,6 +106,7 @@ public class DeliveryWorker : BackgroundService
         }
         catch (Exception ex)
         {
+            // catch network errors or timeouts
             HandleFailure(delivery, attempt, ex.Message);
         }
 
@@ -112,7 +118,7 @@ public class DeliveryWorker : BackgroundService
     {
         attempt.ErrorMessage = error;
 
-        // Exponential backoff with a hardcoded policy for the worker demo
+        // stop trying after 8 attempts (roughly maps to standard DLQ patterns)
         if (delivery.AttemptCount >= 8)
         {
             delivery.Status = DeliveryStatus.DeadLettered;
@@ -120,7 +126,8 @@ public class DeliveryWorker : BackgroundService
         }
         else
         {
-            var backoffSeconds = Math.Pow(2, delivery.AttemptCount); // 2, 4, 8, 16...
+            // simple exponential backoff: 2s, 4s, 8s, etc.
+            var backoffSeconds = Math.Pow(2, delivery.AttemptCount);
             delivery.NextAttemptAt = DateTimeOffset.UtcNow.AddSeconds(backoffSeconds);
         }
     }

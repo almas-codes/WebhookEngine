@@ -20,6 +20,8 @@ public static class HmacSigner
     public static bool Verify(string payload, string signature, string secret)
     {
         var expectedSignature = GenerateSignature(payload, secret);
+        
+        // use FixedTimeEquals to prevent timing attacks
         return CryptographicOperations.FixedTimeEquals(
             Convert.FromBase64String(signature),
             Convert.FromBase64String(expectedSignature)
